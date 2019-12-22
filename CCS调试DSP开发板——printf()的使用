@@ -1,0 +1,38 @@
+How to use printf in a project
+Step 1: Make sure you include the appropriate header file, e.g. stdio.h, when calling printf. Failure to do so will cause the compiler to incorrectly guess how the arguments should be placed on the stack/registers since printf takes a variable number of arguments.
+Step 2: By default printf() requires space on the heap (i.e. it invokes malloc "under the hood"). [Note: When no heap is configured, printf silently fails, and no output is visible in CCS - specifically the "Stdout" window in CCS will not open.] Use setvbuf() in order to get printf to use a statically defined buffer or else make sure you have allocated enough heap space (minimum 1K words or 0x400):
+For projects not using DSP/BIOS: Under Project -> Build Options -> Linker -> Heap Size(-heap) enter the heap size, e.g. 0x400
+If using DSP/BIOS:
+Open your tcf file in the configuration tool.
+Right click on Memory Section Manager and go to Properties.
+Uncheck the "No Dynamic Heaps" box if it is not already unchecked. Click OK to exit the dialog.
+Right-click on the memory section where you would like to create a heap, e.g. DDR2 and go to Properties.
+Click the "Create a heap in this memory" box and enter the size. Click OK to exit the dialog.
+Right-click once again on Memory Section Manager and set the "segment for malloc/free" to a valid section, e.g. DDR2.
+C2000 Users: Make sure that in linker command file you have properly allocated the .sysmem and .esysmem sections to valid memory of sufficient size. The heap gets allocated to the .sysmem section.
+Step 3: Make sure you have allocated the .cio section to valid memory:
+This section is used by the C I/O functions and needs to be allocated to valid data memory (PAGE 1) in the linker command file. It usually requires ~0x120 words but may be dependent on device family.
+
+Step 4: Make sure you allow setting of CIO breakpoints at load:
+Under Option -> Customize -> Program/Project Load -> Program make sure the Do Not Set CIO Breakpoint At Load is not checked. If this is checked, you will not see any CIO activity.Note: The downside of allowing the setting of CIO break-points (unchecked box) is that when debugging from Flash, it will use one hardware break-point. You may need to move C I/O code to RAM to avoid this issue.
+
+Step 5: Always flush your C I/O buffers before a breakpoint. The easiest way to do this is using a \n statement (new line) to terminate your printf. Since the stdout stream is line buffered this will cause the buffer to be flushed.
+Alternatively, at the end of your code, or before setting a breakpoint, make sure you flush the buffers so when you hit the breakpoint, the last printf or fprintf() message is output:
+
+fflush(stdout); // This will flush any pending printf output
+fflush(FilePointer); // This will flush any pending fprintf output
+
+Using printf() to output to a UART
+Get/write a device driver for outputting data from the UART (or whatever interface you choose).
+Write the low-level functions as described in Chapter 8.2 The C I/O Functions of the C Compiler User's Guide.
+Call add_device() to add your functions to the stream table (i.e. in addition to stdin, stdout, stderr).
+Open your stream.
+Redirect your stream to stdout using freopen.
+Specify what buffering is to be used for your stream by calling setvbuf.
+For example:
+
+ret_val = add_device("uart", _SSA, uart_open, uart_close, uart_read, uart_write, uart_lseek, uart_unlink, uart_rename);
+fid = fopen("uart","w");
+freopen("uart:", "w", stdout); // redirect stdout to uart
+setvbuf(stdout, NULL, _IONBF, 0); // turn off buffering for stdout
+printf("Hello world!\r\n");
