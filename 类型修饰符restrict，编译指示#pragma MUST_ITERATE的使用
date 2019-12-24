@@ -1,0 +1,67 @@
+restrict的作用就是限制一个指针对一块内存的访问，进一步说就是如果一块内存区域通过一个受限制指针访问，那么它就不能通过另一个受限指针访问。
+
+引入restrict的目的是确保同一块内存上没有其它引用，让编译器更好地优化指令，生成更有效的汇编代码。
+
+
+
+把#pragma MUST_ITERATE( , , )放在循环体之前，告知开发板循环次数，改善软件流水
+
+MUST_ITERATE告诉编译器循环的属性，但是这些属性必须是真实的，不然程序可能运行出错。此指令主要用于优化C函数循环，一般情况下，只要有循环都最好带上此指令
+
+#pragma MUST_ITERATE(min, max, multiple)；其中multiple参数必须有，循环执行次数必是multiple的整数倍。
+这个信息对编译器使用软件流水技术非常重要
+
+那min和max是最大和最小循环次数
+
+
+
+const short *restrict x；
+
+//Assumption: Vectors x and h are double-word aligned
+_nassert((int)x % 8 == 0);
+
+
+
+
+是个断言语句。
+对条件进行判断，如果为1，通过，为0，则抛出异常。
+
+
+通过对printf() 和 LOG_printf() 运行时间作比较发现，在Ｃ６２１１运行在１５０ＭＨｚ的情况下，printf()需花费４０００个周期约２６．７μs， LOG_printf()只花费36个周期约0.24μｓ。printf() 比 LOG_printf() 多开销１００倍以上的时间，因此 LOG_printf() 对于实时地显示一些运行状态是非常有帮助的。而且对于熟悉Ｃ语言的开发者来说， LOG_printf() 的调用格式几乎与printf() 完全一样。
+
+
+
+就象大家更熟悉的const一样，volatile是一个类型修饰符（type specifier）。它是被设计用来修饰被不同线程访问和修改的变量。如果没有volatile，基本上会导致这样的结果：要么无法编写多线程程序，要么编译器失去大量优化的机会。
+
+volatile的作用: 作为指令关键字,确保本条指令不会因编译器的优化而省略,且要求每次直接读值.
+
+　　简单地说就是防止编译器对代码进行优化.比如如下程序:
+　　XBYTE[2]=0x55;
+　　XBYTE[2]=0x56;
+　　XBYTE[2]=0x57;
+　　XBYTE[2]=0x58;
+　　如果对外部硬件上述四条语句分别表示不同的操作,会产生四种不同的动作,那么编译器就不能像对待纯粹的程序那样对上述四条语句进行优化只认为XBYTE[2]=0x58;而忽略前三条语句(即只产生一条机器代码),此时编译器会逐一的进行编译并产生相应的机器代码(四条).
+　一般说来，volatile用在如下的几个地方：
+
+　　1、中断服务程序中修改的供其它程序检测的变量需要加volatile；
+　　2、多任务环境下各任务间共享的标志应该加volatile；
+　　3、存储器映射的硬件寄存器通常也要加volatile说明，因为每次对它的读写都可能由不同意义；
+　　另外，以上这几种情况经常还要同时考虑数据的完整性（相互关联的几个标志读了一半被打断了重写），在1中可以通过关中断来实
+　　现，2中可以禁止任务调度，3中则只能依靠硬件的良好设计了。
+
+
+ // Next two lines for debug only to halt the processor here
+  // Remove after inserting ISR Code
+   asm ("      ESTOP0");
+   for(;;);
+
+
+  asm ("      ESTOP0");    是停止仿真的意思。
+1.连接仿真器后ESTOP0是0还是1？
+是1的话就会停止仿真
+是0的话就会执行下面的for循环， 处理器就停留在此处了。。。。
+
+General Purpose Input Output (通用输入/输出)简称为GPIO
+————————————————
+版权声明：本文为CSDN博主「timidsmile」的原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/timidsmile/article/details/7546023
